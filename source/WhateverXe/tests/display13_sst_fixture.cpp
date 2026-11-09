@@ -158,8 +158,9 @@ int main(int argc,char **argv){
   Fixture f(0,0,ddi);Map map;setup(f,map,ddi,0,4,20,true);
   auto &b=display13FBPower.bridge;b.bootPort=ddi;b.bootAdopted=false;
   b.bootPGProtected=b.bootDDIProtected=true;
-  put(f.port,0x550,0U);assert(!XE::display13SSTPort(f.port));
+  put(f.port,0x550,0U);assert(XE::display13SSTPort(f.port)==f.port);
   assert(XE::display13BootPanelPort(f.port)==f.port);
+  state.adlnOutputWiring.panel=0;assert(!XE::display13SSTPort(f.port));state.adlnOutputWiring.panel=1U<<ddi;
   assert(Display13FBMemory::field<unsigned>(f.port,0x550)==0);
   b.bootAdopted=true;assert(!XE::display13BootPanelPort(f.port));b.bootAdopted=false;
   b.bootDDIProtected=false;assert(!XE::display13BootPanelPort(f.port));b.bootDDIProtected=true;
