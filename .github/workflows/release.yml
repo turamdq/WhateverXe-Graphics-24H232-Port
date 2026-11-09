@@ -1,7 +1,7 @@
 name: Build and release
 on:
   push:
-    branches: [main]
+    branches: [main, experiment/beluga-edp-6bpc-550]
     tags: ['v*']
   workflow_dispatch:
 permissions:
