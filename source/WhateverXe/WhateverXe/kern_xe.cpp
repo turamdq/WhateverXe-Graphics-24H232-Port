@@ -12272,8 +12272,12 @@ bool XE::processTGLAccelerator(KernelPatcher &patcher, size_t index, mach_vm_add
 				auxAlignOK, iosCCSOK, ffModeOK, cpsOK, flushOK, tlbPreparserOK,
 				semaphoreTLBOK, hangOK, recoveryOK, completionCacheOK, contextCacheOK
 			};
-			IORegistryEntry::getRegistryRoot()->setProperty(
-				"TGLAcceleratorAdmissionStages", admissionStages, sizeof(admissionStages));
+			auto admissionData = OSData::withBytes(admissionStages, sizeof(admissionStages));
+			if (admissionData) {
+				IORegistryEntry::getRegistryRoot()->setProperty(
+					"TGLAcceleratorAdmissionStages", admissionData);
+				admissionData->release();
+			}
 			tglAcceleratorReady = resourcesReady && surfaceABIReady && adlnObserved && skuReady && urbReady && ccsReady && hizReady && ccsPSReady && ggttOK && observed && ok && gucOK && dmaWriteOK && hostOK && scratchOK && blitInitOK && tglMMIOUCReady && copyOK && auxAlignOK && iosCCSOK && ffModeOK && cpsOK && flushOK && tlbPreparserOK && semaphoreTLBOK && hangOK && recoveryOK && completionCacheOK && contextCacheOK;
 			// r201: resource/copy diagnostics are absent, not admission requirements.
 			IORegistryEntry::getRegistryRoot()->setProperty("TGLResourceDiagnosticsRemoved",true);
