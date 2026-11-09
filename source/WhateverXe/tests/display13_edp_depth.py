@@ -24,14 +24,14 @@ assert 'config[0]<2 && (s->adlnOutputWiring.panel&(1U<<config[0]))' in sst
 
 # Verify the intended matrix: 8 bpc everywhere; 6 bpc only on internal eDP.
 for panel in (False, True):
-    for bpc in range(8):
-        assert (bpc == 0 or (panel and bpc == 2)) == (bpc == 0 or (panel and bpc == 2))
+    accepted = [bpc for bpc in range(8) if bpc == 0 or (panel and bpc == 2)]
+    assert accepted == ([0, 2] if panel else [0])
 for protocol in ('TMDS', 'DP', 'EDP'):
-    for bpc in range(8):
-        accepted = (bpc == 0 or (protocol == 'EDP' and bpc == 2))
-        assert accepted == (bpc == 0 or (protocol == 'EDP' and bpc == 2))
+    accepted = [bpc for bpc in range(8) if bpc == 0 or (protocol == 'EDP' and bpc == 2)]
+    assert accepted == ([0, 2] if protocol == 'EDP' else [0])
 for ddi in range(3):
     for panel_mask in range(4):
         accepted = (ddi < 2 and bool(panel_mask & (1 << ddi)))
-        assert accepted == (ddi < 2 and bool(panel_mask & (1 << ddi)))
+        expected = (ddi == 0 and bool(panel_mask & 1)) or (ddi == 1 and bool(panel_mask & 2))
+        assert accepted == expected
 print('PASS: eDP 6-bpc source, plane, memory and port guards remain panel-scoped')
