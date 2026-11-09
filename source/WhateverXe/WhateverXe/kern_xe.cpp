@@ -12262,6 +12262,18 @@ bool XE::processTGLAccelerator(KernelPatcher &patcher, size_t index, mach_vm_add
 			// accelerator rejected before either native lifecycle callback.
 			const bool resourcesReady=(!tglGT2Detected || tglGT2Ready) &&
 				(!display12SmallGTDetected || display12SmallGTReady);
+			// Publish the exact admission inputs before combining them. This is
+			// diagnostic only: it does not relax or reorder any accelerator gate.
+			// Index 0 is the record version; indices 1..29 follow the gate below.
+			const uint64_t admissionStages[] {
+				1, resourcesReady, surfaceABIReady, adlnObserved, skuReady, urbReady,
+				ccsReady, hizReady, ccsPSReady, ggttOK, observed, ok, gucOK,
+				dmaWriteOK, hostOK, scratchOK, blitInitOK, tglMMIOUCReady, copyOK,
+				auxAlignOK, iosCCSOK, ffModeOK, cpsOK, flushOK, tlbPreparserOK,
+				semaphoreTLBOK, hangOK, recoveryOK, completionCacheOK, contextCacheOK
+			};
+			IORegistryEntry::getRegistryRoot()->setProperty(
+				"TGLAcceleratorAdmissionStages", admissionStages, sizeof(admissionStages));
 			tglAcceleratorReady = resourcesReady && surfaceABIReady && adlnObserved && skuReady && urbReady && ccsReady && hizReady && ccsPSReady && ggttOK && observed && ok && gucOK && dmaWriteOK && hostOK && scratchOK && blitInitOK && tglMMIOUCReady && copyOK && auxAlignOK && iosCCSOK && ffModeOK && cpsOK && flushOK && tlbPreparserOK && semaphoreTLBOK && hangOK && recoveryOK && completionCacheOK && contextCacheOK;
 			// r201: resource/copy diagnostics are absent, not admission requirements.
 			IORegistryEntry::getRegistryRoot()->setProperty("TGLResourceDiagnosticsRemoved",true);
