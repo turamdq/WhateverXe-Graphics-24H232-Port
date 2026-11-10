@@ -14321,10 +14321,14 @@ uint32_t XE::wrapTGLLaneMask(void *port) {
 }
 
 bool XE::wrapTGLAcceleratorStart(IOService *that, IOService *provider) {
+ SYSLOG("igfx", "TGL accelerator start wrapper entered");
  if((callbackXE->tglGT2Detected && !callbackXE->tglGT2Ready) ||
     (callbackXE->display12SmallGTDetected && !callbackXE->display12SmallGTReady) ||
     (callbackXE->adlsDisplaySelected && (!callbackXE->adlsDisplayHooksReady ||
-     __atomic_load_n(&callbackXE->adlsBootConsumersFailed,__ATOMIC_ACQUIRE))))return false;
+     __atomic_load_n(&callbackXE->adlsBootConsumersFailed,__ATOMIC_ACQUIRE)))) {
+  SYSLOG("igfx", "TGL accelerator start blocked: graphics readiness guard");
+  return false;
+ }
  if (callbackXE->adlnDetected && adlnNativeRCSProfileRequested && !adlnNativeRCSProfileReady) {
   SYSLOG("igfx", "AlderLakeN native RCS profile qualification rejected accelerator start");
   return false;
@@ -14341,7 +14345,10 @@ bool XE::wrapTGLAcceleratorStart(IOService *that, IOService *provider) {
   return false;
  }
  tglRecordStartOrder(5,that);
-	if (!callbackXE->tglAcceleratorReady) return false;
+	if (!callbackXE->tglAcceleratorReady) {
+  SYSLOG("igfx", "TGL accelerator start blocked: accelerator route not ready");
+  return false;
+ }
 	if (callbackXE->adlnDetected) {
 		auto pci=OSDynamicCast(IOPCIDevice,provider);
 		if (!callbackXE->adlnNativeReady || !pci || !xelpDisplay13RenderDevice(pci)) return false;
@@ -14421,7 +14428,7 @@ bool XE::wrapTGLAcceleratorStart(IOService *that, IOService *provider) {
   }
 	}
 	tglObserveAccelerator(that, 2, false, 0, reinterpret_cast<uintptr_t>(provider));
-	SYSLOG("igfx", "TGL accelerator start entered");
+	SYSLOG("igfx", "TGL accelerator start entering donor start");
 	bool result = FunctionCast(wrapTGLAcceleratorStart, callbackXE->orgTGLAcceleratorStart)(that, provider);
 	if (result) IORegistryEntry::getRegistryRoot()->setProperty("TGLIOSurfaceCCSAtStart",
 		*reinterpret_cast<uint8_t *>(reinterpret_cast<uint8_t *>(that)+0x1474),32);
