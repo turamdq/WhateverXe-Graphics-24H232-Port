@@ -190,6 +190,19 @@ int main() {
         if(!failure)assert(a.resources.eus==96 && a.resources.nativeSubslices==12 &&
             a.resources.l3Banks==8 && a.resources.urbKiB==512 && a.releasedMask==3);
     }
+    // Actual i3-1215U / UHD 46B3 capture: 64 EU, six L3 banks.
+    // The default ADL-N read path must select this narrowly qualified profile.
+    auto i31215=firmwareGT();i31215.regs[0x913C]=0x0F;i31215.regs[0x9134]=0;
+    i31215.regs[0x9118]=0x44;i31215.regs[0x9140]=0x000E00FB;
+    auto adln64=AlderLakeN::readGT(i31215,true);
+    assert(adln64.status==AlderLakeN::GTStatus::Complete && adln64.requestedMask==3 && adln64.releasedMask==3);
+    assert(adln64.resources.slices==1 && adln64.resources.dss==4 && adln64.resources.nativeSubslices==8);
+    assert(adln64.resources.eus==64 && adln64.resources.l3Banks==6 && adln64.resources.urbKiB==384);
+    assert(adln64.fuses[3]==0x44 && adln64.fuses[4]==0x000E00FB);
+    auto wrongMedia=i31215;wrongMedia.regs[0x9140]=0x000E00FA;
+    assert(AlderLakeN::readGT(wrongMedia,true).status==AlderLakeN::GTStatus::ProfileMismatch);
+    auto wrongL3=i31215;wrongL3.regs[0x9118]=0x45;
+    assert(AlderLakeN::readGT(wrongL3,true).status==AlderLakeN::GTStatus::ProfileMismatch);
     auto excludedGT=firmwareGT();assert(AlderLakeN::readGT(excludedGT,false).status==AlderLakeN::GTStatus::NotAdmitted && excludedGT.reads.empty());
     auto busyGT=firmwareGT();busyGT.regs[0xA188]=1;
     assert(AlderLakeN::readGT(busyGT,true).status==AlderLakeN::GTStatus::ExistingOwner && busyGT.writes.empty());
