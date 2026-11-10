@@ -56,6 +56,30 @@ inline bool decodeADLPGT(const uint32_t *fuses, GTResources &out) {
 
 // TGL U/Y uses the same fuse fields and donor resource backend as ADL-P.
 // Qualify each capacity independently: EU count does not determine L3 banks.
+// Alder Lake-U 46B3 capture: four enabled DSS (64 EU), six L3 banks.
+// 0x9140 is the Gen11/12 media-disable fuse: this capture leaves VDBOX bit 2
+// and VEBOX bit 0 enabled. Keep this narrow profile separate from ADL-P's
+// 0x1/0x5 VDBOX layouts and from the <=32-EU small-GT contract.
+inline bool decodeADLN46B3GT(const uint32_t *fuses, GTResources &out) {
+    out={};
+    if(!fuses)return false;
+    for(unsigned i=0;i<5;++i)if(fuses[i]==UINT32_MAX)return false;
+    const auto slice=fuses[0]&0xFF;
+    const auto dssMask=fuses[1]&0x3F;
+    const auto euDisable=fuses[2]&0xFF;
+    const auto l3Disable=fuses[3]&0xFF;
+    const auto vdboxEnable=(~fuses[4])&0xFF;
+    const auto veboxEnable=((~fuses[4])>>16)&0xF;
+    const auto dss=static_cast<uint32_t>(__builtin_popcount(dssMask));
+    const auto eus=2*dss*(8-static_cast<uint32_t>(__builtin_popcount(euDisable)));
+    const auto l3Banks=8-static_cast<uint32_t>(__builtin_popcount(l3Disable));
+    if(slice!=1 || dssMask!=0x0F || euDisable!=0 || l3Disable!=0x44 ||
+       vdboxEnable!=0x04 || veboxEnable!=0x01 || dss!=4 || eus!=64 || l3Banks!=6)
+        return false;
+    out={1,dss,2*dss,eus,l3Banks,64*l3Banks};
+    return true;
+}
+
 inline bool decodeTGLGT2(const uint32_t *fuses, GTResources &out) {
     return decodeADLPGT(fuses,out);
 }
