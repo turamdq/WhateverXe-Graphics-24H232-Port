@@ -1,7 +1,7 @@
 name: Build and release
 on:
   push:
-    branches: [main]
+    branches: [main, 'experiment/adln-46b3-64eu-6l3']
     tags: ['v*']
   workflow_dispatch:
 permissions:
