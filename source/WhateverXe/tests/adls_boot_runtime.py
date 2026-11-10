@@ -7,6 +7,7 @@ a=s.index('bool XE::wrapTGLAcceleratorStart(');b=s.index(' if (callbackXE->adlnD
 entry=s[a:b]+' return true;\n}'
 code='''
 #include <cassert>
+#define SYSLOG(...) ((void)0)
 struct IOService {};
 struct XE {
  bool tglGT2Detected=false,tglGT2Ready=false;
