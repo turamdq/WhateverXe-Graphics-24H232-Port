@@ -24,6 +24,7 @@ code=r'''
 #include <cassert>
 #include <cstdio>
 #include <cstring>
+#define SYSLOG(...) ((void)0)
 using SInt32=int;using mach_vm_address_t=uintptr_t;
 struct IOService {virtual ~IOService()=default;};
 struct IOPCIDevice:IOService {uint32_t configRead32(unsigned){return 0x9a498086;}};
