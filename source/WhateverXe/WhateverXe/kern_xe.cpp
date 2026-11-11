@@ -4229,7 +4229,9 @@ void XE::adlnBootstrap(IOPCIDevice *pci) {
 	if (gtTest) {
 		uint32_t edram=UINT32_MAX;
 		auto gt=AlderLakeN::readGT(io,barReady && xelpMemoryMatches(pci),
-			adlnNativeRequested ? &edram : nullptr,adlpRenderRequested ? XELP::decodeADLPGT : nullptr);
+			adlnNativeRequested ? &edram : nullptr,
+            adlpRenderRequested ? ((xeProfile.identity==0x46B38086 && xeProfile.revision==0x0C) ?
+                XELP::decodeADLP46B3GT : XELP::decodeADLPGT) : nullptr);
 		if (adlnNativeRequested) {
             adlnNativeSubslices=gt.resources.nativeSubslices; adlnL3Banks=gt.resources.l3Banks; adlnNativeEUs=gt.resources.eus;
             renderReady=gt.status==AlderLakeN::GTStatus::Complete && !(edram&1);
