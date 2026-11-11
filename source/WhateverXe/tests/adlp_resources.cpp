@@ -10,6 +10,23 @@ int main() {
     uint32_t f[]={1,0x3f,0,0,0xe00fa};GTResources r;
     assert(decodeADLPGT(f,r) && r.dss==6 && r.nativeSubslices==12 && r.eus==96 && r.l3Banks==8 && r.urbKiB==512);
     assert(!decodeSmallGT(f,r));
+
+    // Experimental 46B3 rev 0C capture: 4 DSS, 64 EU, six L3 banks.
+    // The legacy ADL-P decoder must continue rejecting video fuse value 4.
+    uint32_t f46b3[]={1,0x0f,0,0x44,0x000e00fb};
+    assert(decodeADLP46B3GT(f46b3,r) && r.dss==4 && r.nativeSubslices==8 &&
+           r.eus==64 && r.l3Banks==6 && r.urbKiB==384);
+    assert(!decodeADLPGT(f46b3,r));
+    assert(!decodeADLP46B3GT(nullptr,r));
+    for(unsigned i=0;i<5;++i) {
+        auto save=f46b3[i];f46b3[i]=~0U;
+        assert(!decodeADLP46B3GT(f46b3,r));f46b3[i]=save;
+    }
+    // This experimental decoder is intentionally restricted to video fuse 4.
+    for(unsigned videoFuse:{0x000e00faU,0x000e00feU}) {
+        auto save=f46b3[4];f46b3[4]=videoFuse;
+        assert(!decodeADLP46B3GT(f46b3,r));f46b3[4]=save;
+    }
     for(unsigned mask=1;mask<64;++mask)for(unsigned eu=0;eu<256;++eu)for(unsigned l3=0;l3<256;++l3) {
         uint32_t v[]={1,mask,eu,l3,0xe00fa};
         const auto per=2*(8-__builtin_popcount(eu)),banks=8-__builtin_popcount(l3);
