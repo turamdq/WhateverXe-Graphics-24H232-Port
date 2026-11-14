@@ -1,6 +1,6 @@
-# WhateverXe Graphics 0.4.1 — 本地移植包
+# WhateverXe Graphics 0.4.4 — 本地移植包
 
-本目录包含基于上游 WhateverXe 0.8.0（db438fdf4d5fe903f5dfbc65537ed3884e2ea980）的完整源码和本地修复。MacKernelSDK、Lilu 和官方 Graphics 0.4.1 pkg 由 bootstrap 下载并校验。**实际修改的是 WhateverXe 插件；Graphics 中的 Apple 图形二进制磁盘文件保持原样，并非重新开源或重新编译 Apple 驱动。**
+本目录包含基于上游 WhateverXe 0.8.2（db438fdf4d5fe903f5dfbc65537ed3884e2ea980）的完整源码和本地修复。MacKernelSDK、Lilu 和官方 Graphics 0.4.4 pkg 由 bootstrap 下载并校验。**实际修改的是 WhateverXe 插件；Graphics 中的 Apple 图形二进制磁盘文件保持原样，并非重新开源或重新编译 Apple 驱动。**
 
 ## 适用范围
 
@@ -25,7 +25,7 @@
 4. 从该 EFI 启动 macOS 后安装 target 中的 pkg，重启。pkg 保留官方图形安装流程，另把本地插件和说明放到 `/Library/Application Support/WhateverXe-Port`。**pkg 不自动挂载/改写 EFI，也不替你启用插件。**
 5. 如控制中心出现已确认的 Target device architecture is nil 崩溃，以登录用户运行 `bash tools/controlcenter-workaround.sh`。撤销：`defaults delete com.apple.controlcenter METAL_ERROR_MODE`，然后重启控制中心。
 
-从旧版升级时，应同时更新本项目 EFI 插件和 Graphics 0.4.1，避免新旧组件混用。完整保留上游签名 payload；新版包含 Metal/视频驱动及内核更新兼容性修复。
+从旧版升级时，应同时更新本项目 EFI 插件和 Graphics 0.4.4，避免新旧组件混用。完整保留上游签名 payload；新版包含 Metal/视频驱动及内核更新兼容性修复。
 
 ## 构建
 

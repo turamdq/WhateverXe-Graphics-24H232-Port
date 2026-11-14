@@ -2,7 +2,7 @@
 from pathlib import Path
 import hashlib,subprocess,tempfile,shutil
 R=Path(__file__).resolve().parents[1]
-assets=[('graphics','https://github.com/b00t0x/WhateverXe-Graphics/releases/download/v0.4.1/WhateverXe-Graphics-0.4.1.pkg','7f7ce3b924ad421cff0c4f30534598858474b8c9539c4b889a461bc1d5fed02c'),('sdk','https://codeload.github.com/acidanthera/MacKernelSDK/tar.gz/3f750085caa17ec3a7880f11c11bf4f48cd6a164','8931e622b6d16a7052cb2c2dabe16be06963a34b747f19e6cda2bbe8bc7e2557'),('lilu','https://github.com/acidanthera/Lilu/releases/download/1.7.2/Lilu-1.7.2-DEBUG.zip','e95df95d82e8b151047abf359ecd9c853755c59293e19dfcc3907da8fbd8cf89')]
+assets=[('graphics','https://github.com/b00t0x/WhateverXe-Graphics/releases/download/v0.4.4/WhateverXe-Graphics-0.4.4.pkg','f4c2d680a7c52c33a3f038ce6945da0aa2cc044e62b935a52ea046c7c473cfec'),('sdk','https://codeload.github.com/acidanthera/MacKernelSDK/tar.gz/3f750085caa17ec3a7880f11c11bf4f48cd6a164','8931e622b6d16a7052cb2c2dabe16be06963a34b747f19e6cda2bbe8bc7e2557'),('lilu','https://github.com/acidanthera/Lilu/releases/download/1.7.2/Lilu-1.7.2-DEBUG.zip','e95df95d82e8b151047abf359ecd9c853755c59293e19dfcc3907da8fbd8cf89')]
 with tempfile.TemporaryDirectory() as tmp:
  tmp=Path(tmp)
  for name,url,sha in assets:
@@ -10,7 +10,7 @@ with tempfile.TemporaryDirectory() as tmp:
   subprocess.run(['curl','--fail','--location','--retry','3',url,'-o',str(archive)],check=True)
   assert hashlib.sha256(archive.read_bytes()).hexdigest()==sha, name+' checksum mismatch'
   if name=='graphics':
-   (R/'vendor').mkdir(exist_ok=True);shutil.copy2(archive,R/'vendor/WhateverXe-Graphics-0.4.1.pkg');continue
+   (R/'vendor').mkdir(exist_ok=True);shutil.copy2(archive,R/'vendor/WhateverXe-Graphics-0.4.4.pkg');continue
   dest=R/'source/WhateverXe'/('MacKernelSDK' if name=='sdk' else 'Lilu.kext')
   if dest.exists():continue
   extracted=tmp/(name+'-unpacked');extracted.mkdir()
