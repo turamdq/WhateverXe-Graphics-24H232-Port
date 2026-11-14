@@ -107,6 +107,7 @@ void XeHost::processKernel(KernelPatcher &patcher) {
 }
 void XeHost::processLoadedDependency(KernelPatcher &patcher,KernelPatcher::KextInfo &info) {
  if(info.loadIndex==KernelPatcher::KextInfo::Unloaded)return;
+ SYSLOG("wex", "diag dependency begin id=%s index=%lu", info.id, static_cast<unsigned long>(info.loadIndex));
  // A donor's OSBundleLibraries have loaded before its load callback. Some
  // KC hosts (including IOSurface on Monterey) do not deliver a Lilu callback.
  // Use the same named kmod list as Lilu, then its image/symbol machinery;
@@ -120,7 +121,10 @@ void XeHost::processLoadedDependency(KernelPatcher &patcher,KernelPatcher::KextI
   if(!module->address || module->size<32)return;
   const auto size=patcher.updateRunningInfo(info.loadIndex,module->address,module->size);
   const bool ready=patcher.getError()==KernelPatcher::Error::NoError;
-  patcher.clearError();if(ready)processKext(patcher,info.loadIndex,module->address,size);
+  patcher.clearError();
+  SYSLOG("wex", "diag dependency image id=%s ready=%u size=%lu", info.id, ready, static_cast<unsigned long>(size));
+  if(ready)processKext(patcher,info.loadIndex,module->address,size);
+  SYSLOG("wex", "diag dependency end id=%s", info.id);
   return;
  }
 }
@@ -238,6 +242,7 @@ void XeHost::processKext(KernelPatcher &patcher,size_t index,mach_vm_address_t a
   patcher.clearError();return;
  }
  if(xe.isIntelDonor(index)) {
+  SYSLOG("wex", "diag donor dispatch begin index=%lu size=%lu", static_cast<unsigned long>(index), static_cast<unsigned long>(size));
   if(!dataAccessSeen)processLoadedDependency(patcher,XeDataAccess::dependency());
   if(!surfaceSeen)processLoadedDependency(patcher,surface);
   if(xe.isIntelFramebuffer(index) && xe.requiresIntelProvider() && !providerSeen)
@@ -245,12 +250,15 @@ void XeHost::processKext(KernelPatcher &patcher,size_t index,mach_vm_address_t a
   if(!graphicsSeen && (systemWakeRecovery || resetFramebuffer!=FB_NONE))processLoadedDependency(patcher,graphics);
   if(systemWakeRecovery && !accelSeen)processLoadedDependency(patcher,accelFamily);
   if(backlightEnabled && !backlightSeen)processLoadedDependency(patcher,backlight);
+  SYSLOG("wex", "diag donor dependencies complete surface=%u provider=%u graphics=%u accel=%u", surfaceSeen, providerSeen, graphicsSeen, accelSeen);
   IORegistryEntry::getRegistryRoot()->setProperty("WEXHostDependenciesSeen",dependenciesSeen(index));
   // Always install the donor's probe/start guards in this callback. Returning
   // with queued work lets OSKext enter the unpatched native lifecycle. Unknown
   // host ABIs remain rejected by the existing donor readiness gates.
  }
+ SYSLOG("wex", "diag xe processKext enter index=%lu", static_cast<unsigned long>(index));
  xe.processKext(patcher,index,address,size);
+ SYSLOG("wex", "diag xe processKext returned index=%lu", static_cast<unsigned long>(index));
 }
 // Observe the subscriber that owns a sleep scope. Native system_will_sleep
 // ignores its event-number argument and loops over every display pipe; a
