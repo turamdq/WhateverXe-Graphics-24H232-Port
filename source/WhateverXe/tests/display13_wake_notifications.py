@@ -60,6 +60,8 @@ int main(){
   ++xe.display13FBPower.restoreEpoch;xe.dsiPowerOffNotified=true;
   for(unsigned i=0;i<3;++i){wakes[i]=ons[i]=0;fb[i].bytes[0x199]=0;}
   put(fb[0],0x4284,2U);put(fb[1],0x4284,0U);put(fb[2],0x4284,1U);
+  // FB2 was already in Doze: native prepareToEnterWake owns DidPowerOn.
+  event(&fb[2],8,nullptr);
   if(nativeFirst){event(&fb[1],4,reinterpret_cast<void*>(1));event(&fb[1],8,nullptr);put(fb[1],0x4284,2U);}
  };
  // Same topology, either callback order: each client receives one wake.

@@ -92,7 +92,7 @@ struct XeHost {
  IOPCIDevice *backlightGPU=nullptr;
  struct vc_info{};vc_info consoleVinfo;bool gotConsoleVinfo=false;
  struct XE {
- bool defer=false;bool isIntelDonor(size_t i)const{return defer && (i==1 || i==2);}bool isGraphicsStack(size_t i)const{return isIntelDonor(i) || i==graphics.loadIndex;}
+ bool defer=false;bool isIntelDonor(size_t i)const{return defer && (i==1 || i==2);}bool isGraphicsStack(size_t i)const{return isIntelDonor(i) || i==kextAppleIntelTGLCompat.loadIndex;}
  bool isIntelProvider(size_t index)const;
  bool requiresIntelProvider()const;
  bool isIntelFramebuffer(size_t)const;Graphics frame{1};Graphics *currentFramebuffer=&frame;
@@ -189,7 +189,7 @@ kmod_info_t modules[]={
  {accelFamily.id,0x4000,0x1000,nullptr}};
 loadedHead=modules;
 unsigned order[]={1,2,3,4,6,7};do {for(bool display13:{false,true})for(bool validProvider:{false,true}) {
- XeHost host;host.active=host.xe.defer=true;events.clear();
+ XeHost host;host.active=host.xe.defer=host.kernelProcessed=true;events.clear();
  host.systemWakeRecovery=display13;
  host.xe.tglRequested=!display13;host.xe.display13FramebufferRequested=display13;
  host.xe.providerOK=validProvider;host.xe.requireProvider=true;
@@ -208,7 +208,7 @@ unsigned order[]={1,2,3,4,6,7};do {for(bool display13:{false,true})for(bool vali
 // No notifications for any dependency: both lifecycle installers still run
 // within the donor callbacks, after resolving loaded hosts through Lilu.
 for(bool display13:{false,true}){
- XeHost host;host.active=host.xe.defer=true;host.xe.tglRequested=!display13;host.xe.display13FramebufferRequested=display13;
+ XeHost host;host.active=host.xe.defer=host.kernelProcessed=true;host.xe.tglRequested=!display13;host.xe.display13FramebufferRequested=display13;
  host.systemWakeRecovery=display13;host.xe.requireProvider=true;events.clear();
  host.processKext(patcher,2,0,0);assert((events==std::vector<int>{102}));
  assert(host.surfaceSeen && !host.providerSeen);
@@ -219,7 +219,7 @@ for(bool display13:{false,true}){
 // The installer is still dispatched, so its existing fail-closed guard is
 // installed instead of leaving the native unpatched lifecycle reachable.
 for(unsigned failure=0;failure<4;++failure){
- XeHost host;host.active=host.xe.defer=true;host.xe.tglRequested=true;host.xe.requireProvider=true;events.clear();
+ XeHost host;host.active=host.xe.defer=host.kernelProcessed=true;host.xe.tglRequested=true;host.xe.requireProvider=true;events.clear();
  loadedHead=failure==0?nullptr:modules;validImage=failure!=1;
  auto savedSize=modules[0].size;auto savedIndex=surface.loadIndex;
  if(failure==2)modules[0].size=0;if(failure==3)surface.loadIndex=0;
@@ -241,7 +241,7 @@ for(unsigned prefix:{0U,510U,511U,512U,600U}){
  std::vector<kmod_info_t> peers(prefix);std::vector<std::vector<char>> ids(prefix,std::vector<char>(64));
  for(unsigned i=0;i<prefix;++i){snprintf(ids[i].data(),64,"org.example.dependency.%u",i);peers[i]={ids[i].data(),uintptr_t(0x10000+i*0x1000),0x1000,i+1<prefix?&peers[i+1]:modules};}
  loadedHead=prefix?peers.data():modules;
- XeHost host;host.active=host.xe.defer=host.xe.tglRequested=true;host.xe.requireProvider=true;events.clear();
+ XeHost host;host.active=host.xe.defer=host.xe.tglRequested=host.kernelProcessed=true;host.xe.requireProvider=true;events.clear();
  host.processKext(patcher,1,0,0);
  assert(host.surfaceSeen && host.providerSeen && host.xe.providerReady);
  // This is the boundary oracle, not a copy of dependenciesSeen or queue state.
