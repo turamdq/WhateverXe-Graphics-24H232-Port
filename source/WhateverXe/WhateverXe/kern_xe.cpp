@@ -4279,6 +4279,19 @@ void XE::adlnBootstrap(IOPCIDevice *pci) {
         pci->setProperty("WEXDisplay13BootReady",display13BootReady);
         pci->setProperty("N97NativePreflight",adlnNativeReady);
         pci->setProperty("N97NativeReservedGGTT",prefix);
+        { // Diagnostic only: record why the native start is (not) allowed. CPU-only; no extra hardware access.
+            uint64_t why[8] {1};
+            why[1]=(!aperture ? 1ULL<<0 : 0) | ((aperture && aperture->getLength()!=0x10000000) ? 1ULL<<1 : 0) |
+                (page_size!=4096 ? 1ULL<<2 : 0) | (!physicalOptions ? 1ULL<<3 : 0) |
+                ((pci->configRead16(4)&6)!=6 ? 1ULL<<4 : 0) | (!checkKernelArgument("-allow3d") ? 1ULL<<5 : 0) |
+                (!checkKernelArgument("-disablegfxfirmware") ? 1ULL<<6 : 0) |
+                (checkKernelArgument("-wex-adln-scanout") ? 1ULL<<7 : 0) | (checkKernelArgument("-wex-adln-gpu") ? 1ULL<<8 : 0) |
+                (!prefix ? 1ULL<<16 : 0) | (!renderReady ? 1ULL<<17 : 0);
+            why[2]=sourceProof[3];why[3]=sourceProof[2];why[4]=bootDDI;
+            why[5]=aperture ? aperture->getLength() : 0;why[6]=mapperOptions;why[7]=systemMapper;
+            pci->setProperty("N97NativeBlockReason",why,sizeof(why));
+            if(why[1])SYSLOG("igfx","Native start blocked: reason mask=%llx linearPlan=%llu protocol=%llu ddi=%llu",why[1],why[2],why[3],why[4]);
+        }
     }
 	if (gtTest && checkKernelArgument("-wex-adln-gpu")) {
 		AlderLakeN::GPUResult gpu;
@@ -7631,7 +7644,7 @@ uint8_t *XE::display13SSTPort(void *port) {
  auto p=static_cast<uint8_t *>(port);auto config=Display13FBMemory::field<uint32_t *>(p,0x548);
  if(!Display13FBTopology::selected(s->adlnPlatform,config,s->adlnOutputWiring) ||
     !(s->adlnOutputWiring.links()&(1U<<config[0])) || p[0x117] ||
-    Display13FBMemory::field<uint32_t>(p,0x120)!=config[0] || Display13FBMemory::field<uint32_t>(p,0x550)!=(config[0]>=3?((s->adlnOutputWiring.typeC&(1U<<config[0]))?3U:4U):1U) ||
+    Display13FBMemory::field<uint32_t>(p,0x120)!=config[0] || (Display13FBMemory::field<uint32_t>(p,0x550)!=(config[0]>=3?((s->adlnOutputWiring.typeC&(1U<<config[0]))?3U:4U):1U) && /* eDP port field 0x550 */!(config[0]<2 && (s->adlnOutputWiring.panel&(1U<<config[0])) && !Display13FBMemory::field<uint32_t>(p,0x550))) ||
     Display13FBMemory::field<void *>(p,0x578)!=c.access)return nullptr;
  return p;
 }

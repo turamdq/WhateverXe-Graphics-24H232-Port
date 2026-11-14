@@ -76,6 +76,20 @@ int main() {
         assert(r.status==LinearStatus::Success && dpSourceUnchanged(io,boot,pipe,ddi,0,nullptr,true));
         io.regs[0x60540+0x1000*pipe]^=64;assert(!dpSourceUnchanged(io,boot,pipe,ddi,0,nullptr,true));
     }
+    // eDP panels often run 6 bpc (TRANS_DDI_FUNC_CTL bits 22:20 = 2) with dithering from the
+    // 8-bpc plane. Accept it only as a panel source; every other depth, and external DP, stays rejected.
+    for(unsigned ddi=0;ddi<2;++ddi)for(unsigned pipe=0;pipe<3;++pipe)for(unsigned bpc=1;bpc<8;++bpc) {
+        auto io=firmware(pipe,ddi,2,true);io.regs[0x60400+0x1000*pipe]|=bpc<<20;
+        auto boot=readDisplay(io,true);LinearPlan plan;const bool sixBit=bpc==2;
+        assert(dpSource(boot,pipe,ddi,nullptr,true)==sixBit);
+        assert(!dpSource(boot,pipe,ddi));
+        assert(linearPlan(boot,plan,ddi,GOPProtocol::EDP)==(sixBit?LinearStatus::Ready:LinearStatus::InvalidDPSource));
+        assert(linearPlan(boot,plan,ddi,GOPProtocol::DP)==LinearStatus::InvalidDPSource);
+        if(sixBit) {
+            auto r=reinitializeLinear(io,boot,true,ddi,GOPProtocol::EDP);
+            assert(r.status==LinearStatus::Success && dpSourceUnchanged(io,boot,pipe,ddi,0,nullptr,true));
+        }
+    }
     auto bad=firmware(0,0,4,true);bad.regs[0x60540]=0x80000000;
     auto r=reinitializeLinear(bad,readDisplay(bad,true),true,0,GOPProtocol::DP);
     assert(r.status==LinearStatus::InvalidDPSource && bad.writes.empty());

@@ -1,7 +1,7 @@
 name: Build and release
 on:
   push:
-    branches: [main]
+    branches: [main, testing/46b3-belugaa-v02-video04]
     tags: ['v*']
   workflow_dispatch:
 permissions:
