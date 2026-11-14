@@ -36,22 +36,31 @@ inline bool decodeSmallGT(const uint32_t *fuses, SmallGTResources &out) {
                            fuses[2]&0xFF,fuses[3]&0xFF,out);
 }
 
-// ADL-P Gen12.3 retains the Xe-LP fuse encoding, with up to six DSS and
-// eight L3 banks. Capacity comes from fuses rather than a CPU/board model.
-// The donor URB backend handles 4/6/8 banks; reject unsupported capacities.
-inline bool decodeADLPGT(const uint32_t *fuses, GTResources &out) {
+// Shared ADL-P resource calculation. Keep the video-engine fuse profile
+// explicit: the established ADL-P/TGL decoder accepts only video 1 or 5.
+inline bool decodeADLPGTWithVideoMask(const uint32_t *fuses, GTResources &out, uint32_t videoMask) {
     out={};
     if(!fuses)return false;
     for(unsigned i=0;i<5;++i)if(fuses[i]==UINT32_MAX)return false;
     const auto slice=fuses[0]&0xFF,mask=fuses[1]&0x3F;
     const auto video=(~fuses[4])&0xFF,enhance=((~fuses[4])>>16)&0xF;
-    if(slice!=1 || !mask || (video!=1 && video!=5) || enhance!=1)return false;
+    if(slice!=1 || !mask || video>=32 || !(videoMask&(1U<<video)) || enhance!=1)return false;
     const auto dss=static_cast<uint32_t>(__builtin_popcount(mask));
     const auto perDSS=2*(8-static_cast<uint32_t>(__builtin_popcount(fuses[2]&0xFF)));
     const auto banks=8-static_cast<uint32_t>(__builtin_popcount(fuses[3]&0xFF));
     if((perDSS!=8 && perDSS!=12 && perDSS!=16) || (banks!=4 && banks!=6 && banks!=8))return false;
     out={1,dss,2*dss,dss*perDSS,banks,64*banks};
     return true;
+}
+
+// Existing ADL-P/TGL profiles retain their original admission policy.
+inline bool decodeADLPGT(const uint32_t *fuses, GTResources &out) {
+    return decodeADLPGTWithVideoMask(fuses,out,(1U<<1)|(1U<<5));
+}
+
+// Experimental decoder. The caller must first match physical 8086:46B3 rev 0x0C.
+inline bool decodeADLP46B3GT(const uint32_t *fuses, GTResources &out) {
+    return decodeADLPGTWithVideoMask(fuses,out,(1U<<4));
 }
 
 // TGL U/Y uses the same fuse fields and donor resource backend as ADL-P.
