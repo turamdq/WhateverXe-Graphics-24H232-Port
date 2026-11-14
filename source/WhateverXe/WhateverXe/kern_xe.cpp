@@ -18611,6 +18611,7 @@ bool XE::wrapTGLAllocatePathResources(void *fb, uint32_t portIndex, uint32_t str
 	SYSLOG("igfx", "TGL330 resources native-enter ddi=%u adopt=%u", portIndex, adopting);
 	const auto r = FunctionCast(wrapTGLAllocatePathResources, callbackXE->orgTGLAllocatePathResources)(fb, portIndex, stream);
 	SYSLOG("igfx", "TGL330 resources native-return ddi=%u result=%u", portIndex, r);
+	if (s->adlnDetected) SYSLOG("igfx", "TGL330 resources post-native begin ddi=%u claimed=%u adopt=%u", portIndex, claimed, adopting);
 	if (adopting) {
 		tglObserveTrainingLease(*selected, 7, r ? 0 : 2);
 		if (selected->adopted) {
@@ -18645,11 +18646,15 @@ bool XE::wrapTGLAllocatePathResources(void *fb, uint32_t portIndex, uint32_t str
 		}
 	}
 	if (claimed) {
+		if (s->adlnDetected) SYSLOG("igfx", "TGL330 resources claim-lock enter ddi=%u", portIndex);
 		IORecursiveLockLock(s->tglPathPoolLock);
 		s->tglAllocatingFB[portIndex] = nullptr;
 		IORecursiveLockUnlock(s->tglPathPoolLock);
+		if (s->adlnDetected) SYSLOG("igfx", "TGL330 resources claim-lock exit ddi=%u", portIndex);
 	}
+	if (s->adlnDetected) SYSLOG("igfx", "TGL330 resources observe enter ddi=%u", portIndex);
 	tglObserveResource(fb, nullptr, 9, true, r, portIndex, stream, caller);
+	if (s->adlnDetected) SYSLOG("igfx", "TGL330 resources wrapper exit ddi=%u result=%u", portIndex, r);
 	return r;
 }
 
