@@ -59,3 +59,5 @@ for name in failed:
         print('\\n===== FAILED TEST: '+name+' =====',flush=True)
         print('\\n'.join(log.read_text(errors='replace').splitlines()[-35:]),flush=True)
 sys.exit(bool(failed))
+
+# CI diagnostics: failed test log tails are emitted by the runner above.
