@@ -49,6 +49,7 @@ struct XE {
  static bool display13RetirementHealthy(){return true;}
  static bool retireDisplay13Controller(void*){return true;}
  bool adlsDisplaySelected=false;AlderLakeS::Wiring adlsWiring;
+ bool adlnDetected=false; // Production XE field used by diagnostic-only lease logging.
  // TC_WIRING_FIELDS
  // LEASE_FIELDS
  IORecursiveLock *tglPathPoolLock;
