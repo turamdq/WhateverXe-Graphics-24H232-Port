@@ -63,7 +63,7 @@ struct KernelPatcher {
  void routeBlock(uintptr_t,const uint8_t*,size_t){}
  void clearError(){error=Error::NoError;}
 };
-namespace XeDataAccess {bool processKext(KernelPatcher&,size_t,mach_vm_address_t,size_t){return false;}void processKernel(KernelPatcher &){assert(published);events.push_back(7);}}
+namespace XeDataAccess {KernelPatcher::KextInfo &dependency(){static KernelPatcher::KextInfo value;return value;}bool processKext(KernelPatcher&,size_t,mach_vm_address_t,size_t){return false;}void processKernel(KernelPatcher &){assert(published);events.push_back(7);}}
 struct Graphics:KernelPatcher::KextInfo {Graphics(size_t i=4){loadIndex=i;id="com.apple.iokit.IOGraphicsFamily";}bool off=false;void switchOff(){off=true;}} graphics;
 KernelPatcher::KextInfo surface{"com.apple.iokit.IOSurface",6},backlight{"com.apple.driver.AppleBacklight",5},accelFamily{"com.apple.iokit.IOAcceleratorFamily2",7},kextAppleIntelTGLCompat{"org.b00t0x.AppleIntelTGLCompat",3};
 using IOSimpleLock=int;int scopeLock=0;uintptr_t fakeThread=1;
@@ -92,7 +92,7 @@ struct XeHost {
  IOPCIDevice *backlightGPU=nullptr;
  struct vc_info{};vc_info consoleVinfo;bool gotConsoleVinfo=false;
  struct XE {
- bool defer=false;bool isIntelDonor(size_t i)const{return defer && (i==1 || i==2);}
+ bool defer=false;bool isIntelDonor(size_t i)const{return defer && (i==1 || i==2);}bool isGraphicsStack(size_t i)const{return isIntelDonor(i) || i==graphics.loadIndex;}
  bool isIntelProvider(size_t index)const;
  bool requiresIntelProvider()const;
  bool isIntelFramebuffer(size_t)const;Graphics frame{1};Graphics *currentFramebuffer=&frame;

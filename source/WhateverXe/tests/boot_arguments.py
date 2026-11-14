@@ -57,6 +57,8 @@ fixture = r'''
 static const char *qualified = "Darwin Kernel Version 20.6.0: Thu Jul  6 22:12:47 PDT 2023; root:xnu-7195.141.49.702.12~1/RELEASE_X86_64";
 static const char *version = qualified;
 static std::set<std::string> args;
+static bool activationReady=true;
+namespace WEXGraphicsActivation { bool ready(){return activationReady;} }
 bool checkKernelArgument(const char *name) { return args.count(name); }
 #define SYSLOG(...) ((void)0)
 #define IOLog(...) ((void)0)

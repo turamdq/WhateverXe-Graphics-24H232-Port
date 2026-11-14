@@ -47,7 +47,7 @@ struct {IOLock *lock=nullptr;IOService *controller=nullptr;OSObject *dsiPort=nul
  unsigned dsiNativeWriters=0;bool memoryFaulted=false,clockFaulted=false,watermarkFaulted=false;
  struct {struct {bool faulted=false,suspended=false;}state;}bridge;struct {bool faulted=false;}dbuf;
  struct {IOService *memoryFramebuffer=nullptr;bool destroyingPath=false;}pipe[3];
- Display13Transcoder::Bindings transcoders;}display13FBPower;
+ Display13Transcoder::Bindings transcoders;uint32_t restoreEpoch=1;}display13FBPower;
 struct {uint32_t clientMode=0x10000;uintptr_t changingThread=0;bool presentationFault=false;}dsiFixedMode;
 const XELP::DSI::AppleAdapter::Timing *dsiPresentation(uint32_t mode){
  static XELP::DSI::AppleAdapter::Timing t;
@@ -83,7 +83,8 @@ struct XE {
  uint32_t dsiWakeIncomplete=0;
  uint32_t dsiPowerCallbackBusy=0,dsiPowerOffEvents=0,dsiPowerOnEvents=0;
  bool notifyOK=true;
- bool finishDisplay13SystemWake(IOService *fb){if(!notifyOK)return false;using Event=uint32_t(*)(IOService*,int,void*);auto event=reinterpret_cast<Event>(display13FramebufferEvent);event(fb,4,reinterpret_cast<void*>(1));event(fb,8,nullptr);if(dsiPowerOffNotified){dsiPowerOffNotified=false;++dsiPowerOnEvents;}return true;}
+ bool ownedDisplay13Framebuffer(IOService *fb)const{return dsiModeTarget(fb);}
+ bool finishDisplay13SystemWake(IOService *fb,bool nativePowerOn=false){(void)nativePowerOn;if(!notifyOK)return false;using Event=uint32_t(*)(IOService*,int,void*);auto event=reinterpret_cast<Event>(display13FramebufferEvent);event(fb,4,reinterpret_cast<void*>(1));event(fb,8,nullptr);if(dsiPowerOffNotified){dsiPowerOffNotified=false;++dsiPowerOnEvents;}return true;}
  bool dsiPowerTest=false;struct {bool sleeping=false,failed=false;}dsiRuntimePower;unsigned wakeCalls=0;bool wakeOK=false;
  bool dsiStopTest=false,dsiMemoryReleased=false,dsiDDIReleased=false,stopOK=false;unsigned stopCalls=0;
  struct {bool done=false;bool complete(){return done;}}dsiClockStop;
@@ -102,7 +103,7 @@ struct XE {
   return wakeOK;
  }
  bool dsiPanelOnly=false,publicationReady=false;bool publishDSINativeMode(IOService*){return publicationReady;}
- uint32_t setDSIPresentation(IOService *fb,uint32_t mode,const XELP::DSI::AppleAdapter::Timing &){
+ uint32_t setDSIPresentation(IOService *fb,uint32_t mode,const XELP::DSI::AppleAdapter::Timing &,uint32_t depth=0){(void)depth;
   assert(fbLock.depth && !owner);memcpy(reinterpret_cast<uint8_t *>(fb)+0x4250,&mode,sizeof(mode));return 0;}
  bool dsiNativeWriterHooksReady=true;uintptr_t orgDSICursor[2]{};
  uintptr_t orgDSIMode[6]{};

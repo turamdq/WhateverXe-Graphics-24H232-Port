@@ -38,7 +38,7 @@ struct XE {
  uint32_t displayWakeEventBusy=0,displayWakeEventEpoch=0,displayWakeEventErrors=0;
  uint32_t displayWakeEventPhase[3]{};
  bool restoreDisplay13Ports(IOService*){assert(!held);return true;}
- bool finishDisplay13SystemWake(IOService*);
+ bool finishDisplay13SystemWake(IOService*,bool nativePowerOn=false);
 };
 FUNCTION
 template<class T> void put(IOService &fb,unsigned offset,T value){memcpy(fb.bytes+offset,&value,sizeof(value));}

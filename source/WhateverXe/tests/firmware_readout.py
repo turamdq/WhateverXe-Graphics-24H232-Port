@@ -29,13 +29,13 @@ struct IOMemoryDescriptor {
  static IOMemoryDescriptor *withPhysicalAddress(uint64_t,unsigned,unsigned){return nullptr;}
  Map *map(unsigned){return nullptr;}void release(){}
 };
-struct IOPCIDevice {unsigned reads=0,publications=0;uint32_t configRead32(unsigned off){assert(off==0xfc);++reads;return 0;}
+struct IOPCIDevice {unsigned reads=0,publications=0;uint64_t getRegistryEntryID(){return 0;}uint32_t configRead32(unsigned off){assert(off==0xfc);++reads;return 0;}
  std::map<std::string,OSData> properties;
  OSData *getProperty(const char *key){auto i=properties.find(key);return i==properties.end()?nullptr:&i->second;}
  void setProperty(const char*,uint32_t,unsigned){++publications;}void setProperty(const char*,const void*,unsigned){++publications;}
  void setProperty(const char *key,OSData *d){++publications;properties[key]=*d;}
 };
-struct XE {XELP::Profile xeProfile;XELP::VBT::Ports firmwarePorts;void xelpReadFirmware(IOPCIDevice*);};
+struct XE {XELP::Profile xeProfile;XELP::VBT::Ports firmwarePorts;uint64_t firmwareOwnerID{};XELP::Family firmwareFamily{};void xelpReadFirmware(IOPCIDevice*);void captureFirmware(IOPCIDevice*,const XELP::Profile&);};
 BODY
 int main(int argc,char **argv){
  for(unsigned kind=0;kind<5;++kind){XE x;IOPCIDevice pci;

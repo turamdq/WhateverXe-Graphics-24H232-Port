@@ -40,7 +40,7 @@ struct XE {
  bool dsiArmedBackingOwned(IOService *f,OSObject *){return dsiPublishedTarget(f);}
  bool dsiNativeUpdateAllowed(IOService *){return !dsiFixedMode.changingThread && !dsiFixedMode.presentationFault;}
  bool releaseDSILogical(IOService *);
- uint32_t setDSIPresentation(IOService *,uint32_t,const Timing &);
+ uint32_t setDSIPresentation(IOService *,uint32_t,const Timing &,uint32_t depth=0);
 }xe;
 FUNCTIONS
 unsigned allocations=0,frees=0,caps=0;bool failAllocation=false,failRelease=false;
